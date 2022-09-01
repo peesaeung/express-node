@@ -1,0 +1,892 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model coder_task {
+  vid        BigInt
+  status     Int?     @db.SmallInt
+  from_staff String   @db.VarChar
+  to_staff   String?  @db.VarChar
+  event_time DateTime @default(now()) @db.Timestamptz(6)
+  txn_info   txn_info @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([vid, event_time, from_staff])
+  @@index([status], map: "coder_task_status")
+  @@index([to_staff], map: "coder_task_to_staff")
+  @@index([vid], map: "coder_task_vid")
+}
+
+model coverage_scheme_key {
+  key                         String          @id(map: "coverage_scheme_key_key_pkey") @db.VarChar
+  name                        String?         @db.VarChar
+  dx_code_standard            String[]        @db.VarChar
+  optional_dx_code_standard   String[]        @db.VarChar
+  proc_code_standard          String[]        @db.VarChar
+  optional_proc_code_standard String[]        @db.VarChar
+  calculator_url              String?         @db.VarChar
+  detail                      String?
+  valid_date                  DateTime?       @default(now()) @db.Timestamptz(6)
+  feature_key_val             feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([dx_code_standard(ops: ArrayOps)], map: "coverage_scheme_key_dx_code_standard", type: Gin)
+  @@index([key], map: "coverage_scheme_key_key")
+  @@index([name], map: "coverage_scheme_key_name")
+  @@index([dx_code_standard(ops: ArrayOps)], map: "coverage_scheme_key_proc_code_standard", type: Gin)
+}
+
+model criteria_feature_key {
+  key                String          @id(map: "criteria_feature_key_key_pkey") @db.VarChar
+  name               String?         @db.VarChar
+  icd_include        Json
+  icd_exclude        Json?
+  calculator_url     String?         @db.VarChar
+  criterion_file_url String?         @db.VarChar
+  detail             String?
+  valid_date         DateTime?       @default(now()) @db.Timestamptz(6)
+  feature_key_val    feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([icd_exclude], map: "criteria_feature_key_icd_exc", type: Gin)
+  @@index([icd_include], map: "criteria_feature_key_icd_inc", type: Gin)
+  @@index([key], map: "criteria_feature_key_key")
+  @@index([name], map: "criteria_feature_key_name")
+}
+
+model feature_bool_ai {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             Boolean?
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  ref_row         String[]        @db.VarChar
+  note_ai         Json?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_bool_ai_org_id_pid_txn_unique")
+  @@index([key], map: "feature_bool_ai_key")
+  @@index([org_id], map: "feature_bool_ai_org_id")
+  @@index([pid], map: "feature_bool_ai_pid")
+  @@index([vid], map: "feature_bool_ai_txn")
+}
+
+model feature_bool_coder {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             Boolean?
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  note_ext        String?
+  note_int        String?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_bool_coder_org_id_pid_txn_unique")
+  @@index([key], map: "feature_bool_coder_key")
+  @@index([org_id], map: "feature_bool_coder_org_id")
+  @@index([pid], map: "feature_bool_coder_pid")
+  @@index([vid], map: "feature_bool_coder_txn")
+}
+
+model feature_bool_his {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             Boolean?
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_bool_his_org_id_pid_txn_unique")
+  @@index([key], map: "feature_bool_his_key")
+  @@index([org_id], map: "feature_bool_his_org_id")
+  @@index([pid], map: "feature_bool_his_pid")
+  @@index([vid], map: "feature_bool_his_txn")
+}
+
+model feature_date_ai {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             DateTime?       @db.Date
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  ref_row         String[]        @db.VarChar
+  note_ai         Json?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_date_ai_org_id_pid_txn_unique")
+  @@index([key], map: "feature_date_ai_key")
+  @@index([org_id], map: "feature_date_ai_org_id")
+  @@index([pid], map: "feature_date_ai_pid")
+  @@index([vid], map: "feature_date_ai_txn")
+}
+
+model feature_date_coder {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             DateTime?       @db.Date
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  note_ext        String?
+  note_int        String?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_date_coder_org_id_pid_txn_unique")
+  @@index([key], map: "feature_date_coder_key")
+  @@index([org_id], map: "feature_date_coder_org_id")
+  @@index([pid], map: "feature_date_coder_pid")
+  @@index([vid], map: "feature_date_coder_txn")
+}
+
+model feature_date_his {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             DateTime?       @db.Date
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_date_his_org_id_pid_txn_unique")
+  @@index([key], map: "feature_date_his_key")
+  @@index([org_id], map: "feature_date_his_org_id")
+  @@index([pid], map: "feature_date_his_pid")
+  @@index([vid], map: "feature_date_his_txn")
+}
+
+model feature_datetime_ai {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             DateTime?       @db.Timestamptz(6)
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  ref_row         String[]        @db.VarChar
+  note_ai         Json?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_datetime_ai_org_id_pid_txn_unique")
+  @@index([key], map: "feature_datetime_ai_key")
+  @@index([org_id], map: "feature_datetime_ai_org_id")
+  @@index([pid], map: "feature_datetime_ai_pid")
+  @@index([vid], map: "feature_datetime_ai_txn")
+}
+
+model feature_datetime_coder {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             DateTime?       @db.Timestamptz(6)
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  note_ext        String?
+  note_int        String?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_datetime_coder_org_id_pid_txn_unique")
+  @@index([key], map: "feature_datetime_coder_key")
+  @@index([org_id], map: "feature_datetime_coder_org_id")
+  @@index([pid], map: "feature_datetime_coder_pid")
+  @@index([vid], map: "feature_datetime_coder_txn")
+}
+
+model feature_datetime_his {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             DateTime?       @db.Timestamptz(6)
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_datetime_his_org_id_pid_txn_unique")
+  @@index([key], map: "feature_datetime_his_key")
+  @@index([org_id], map: "feature_datetime_his_org_id")
+  @@index([pid], map: "feature_datetime_his_pid")
+  @@index([vid], map: "feature_datetime_his_txn")
+}
+
+model feature_decimal_ai {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             Decimal?        @db.Decimal
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  ref_row         String[]        @db.VarChar
+  note_ai         Json?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_decimal_ai_org_id_pid_txn_unique")
+  @@index([key], map: "feature_decimal_ai_key")
+  @@index([org_id], map: "feature_decimal_ai_org_id")
+  @@index([pid], map: "feature_decimal_ai_pid")
+  @@index([vid], map: "feature_decimal_ai_txn")
+}
+
+model feature_decimal_coder {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             Decimal?        @db.Decimal
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  note_ext        String?
+  note_int        String?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_decimal_coder_org_id_pid_txn_unique")
+  @@index([key], map: "feature_decimal_coder_key")
+  @@index([org_id], map: "feature_decimal_coder_org_id")
+  @@index([pid], map: "feature_decimal_coder_pid")
+  @@index([vid], map: "feature_decimal_coder_txn")
+}
+
+model feature_decimal_his {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             Decimal?        @db.Decimal
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_decimal_his_org_id_pid_txn_unique")
+  @@index([key], map: "feature_decimal_his_key")
+  @@index([org_id], map: "feature_decimal_his_org_id")
+  @@index([pid], map: "feature_decimal_his_pid")
+  @@index([vid], map: "feature_decimal_his_txn")
+}
+
+model feature_has_ai {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  key             String          @db.VarChar
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  ref_row         String[]        @db.VarChar
+  note_ai         Json?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_has_ai_org_id_pid_txn_unique")
+  @@index([key], map: "feature_has_ai_key")
+  @@index([org_id], map: "feature_has_ai_org_id")
+  @@index([pid], map: "feature_has_ai_pid")
+  @@index([vid], map: "feature_has_ai_txn")
+}
+
+model feature_has_coder {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  note_ext        String?
+  note_int        String?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_has_coder_org_id_pid_txn_unique")
+  @@index([key], map: "feature_has_coder_key")
+  @@index([org_id], map: "feature_has_coder_org_id")
+  @@index([pid], map: "feature_has_coder_pid")
+  @@index([vid], map: "feature_has_coder_txn")
+}
+
+model feature_has_his {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_has_his_org_id_pid_txn_unique")
+  @@index([key], map: "feature_has_his_key")
+  @@index([org_id], map: "feature_has_his_org_id")
+  @@index([pid], map: "feature_has_his_pid")
+  @@index([vid], map: "feature_has_his_txn")
+}
+
+model feature_json_ai {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             Json?
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  ref_row         String[]        @db.VarChar
+  note_ai         Json?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_json_ai_org_id_pid_txn_unique")
+  @@index([key], map: "feature_json_ai_key")
+  @@index([org_id], map: "feature_json_ai_org_id")
+  @@index([pid], map: "feature_json_ai_pid")
+  @@index([vid], map: "feature_json_ai_txn")
+}
+
+model feature_json_coder {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             Json?
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  note_ext        String?
+  note_int        String?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_json_coder_org_id_pid_txn_unique")
+  @@index([key], map: "feature_json_coder_key")
+  @@index([org_id], map: "feature_json_coder_org_id")
+  @@index([pid], map: "feature_json_coder_pid")
+  @@index([vid], map: "feature_json_coder_txn")
+}
+
+model feature_json_his {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             Json?
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_json_his_org_id_pid_txn_unique")
+  @@index([key], map: "feature_json_his_key")
+  @@index([org_id], map: "feature_json_his_org_id")
+  @@index([pid], map: "feature_json_his_pid")
+  @@index([vid], map: "feature_json_his_txn")
+}
+
+model feature_key_val {
+  key                    String                   @id(map: "key_pkey") @db.VarChar
+  name                   String?                  @db.VarChar
+  type                   String?                  @db.VarChar
+  default_val            String?                  @db.VarChar
+  detail                 String?
+  coverage_scheme_key    coverage_scheme_key?
+  criteria_feature_key   criteria_feature_key?
+  feature_bool_ai        feature_bool_ai[]
+  feature_bool_coder     feature_bool_coder[]
+  feature_bool_his       feature_bool_his[]
+  feature_date_ai        feature_date_ai[]
+  feature_date_coder     feature_date_coder[]
+  feature_date_his       feature_date_his[]
+  feature_datetime_ai    feature_datetime_ai[]
+  feature_datetime_coder feature_datetime_coder[]
+  feature_datetime_his   feature_datetime_his[]
+  feature_decimal_ai     feature_decimal_ai[]
+  feature_decimal_coder  feature_decimal_coder[]
+  feature_decimal_his    feature_decimal_his[]
+  feature_has_ai         feature_has_ai[]
+  feature_has_coder      feature_has_coder[]
+  feature_has_his        feature_has_his[]
+  feature_json_ai        feature_json_ai[]
+  feature_json_coder     feature_json_coder[]
+  feature_json_his       feature_json_his[]
+  feature_smallint_ai    feature_smallint_ai[]
+  feature_smallint_coder feature_smallint_coder[]
+  feature_smallint_his   feature_smallint_his[]
+  feature_text_ai        feature_text_ai[]
+  feature_text_coder     feature_text_coder[]
+  feature_text_his       feature_text_his[]
+
+  @@index([key], map: "kv_key")
+  @@index([name], map: "kv_name")
+}
+
+model feature_smallint_ai {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             Int?            @db.SmallInt
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  ref_row         String[]        @db.VarChar
+  note_ai         Json?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_smallint_ai_org_id_pid_txn_unique")
+  @@index([key], map: "feature_smallint_ai_key")
+  @@index([org_id], map: "feature_smallint_ai_org_id")
+  @@index([pid], map: "feature_smallint_ai_pid")
+  @@index([vid], map: "feature_smallint_ai_txn")
+}
+
+model feature_smallint_coder {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             Int?            @db.SmallInt
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  note_ext        String?
+  note_int        String?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_smallint_coder_org_id_pid_txn_unique")
+  @@index([key], map: "feature_smallint_coder_key")
+  @@index([org_id], map: "feature_smallint_coder_org_id")
+  @@index([pid], map: "feature_smallint_coder_pid")
+  @@index([vid], map: "feature_smallint_coder_txn")
+}
+
+model feature_smallint_his {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             Int?            @db.SmallInt
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_smallint_his_org_id_pid_txn_unique")
+  @@index([key], map: "feature_smallint_his_key")
+  @@index([org_id], map: "feature_smallint_his_org_id")
+  @@index([pid], map: "feature_smallint_his_pid")
+  @@index([vid], map: "feature_smallint_his_txn")
+}
+
+model feature_text_ai {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             String?
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  ref_row         String[]        @db.VarChar
+  note_ai         Json?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_text_ai_org_id_pid_txn_unique")
+  @@index([key], map: "feature_text_ai_key")
+  @@index([org_id], map: "feature_text_ai_org_id")
+  @@index([pid], map: "feature_text_ai_pid")
+  @@index([vid], map: "feature_text_ai_txn")
+}
+
+model feature_text_coder {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             String?
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  note_ext        String?
+  note_int        String?
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_text_coder_org_id_pid_txn_unique")
+  @@index([key], map: "feature_text_coder_key")
+  @@index([org_id], map: "feature_text_coder_org_id")
+  @@index([pid], map: "feature_text_coder_pid")
+  @@index([vid], map: "feature_text_coder_txn")
+}
+
+model feature_text_his {
+  key_id          BigInt          @id @default(autoincrement())
+  org_id          BigInt
+  pid             BigInt?
+  vid             BigInt?
+  iid             BigInt?
+  key             String          @db.VarChar
+  val             String?
+  event_time      DateTime        @default(now()) @db.Timestamptz(6)
+  create_time     DateTime        @default(now()) @db.Timestamptz(6)
+  update_time     DateTime        @default(now()) @db.Timestamptz(6)
+  editor          String?         @db.VarChar
+  item_id         item_id?        @relation(fields: [iid], references: [iid], onDelete: Cascade, onUpdate: NoAction)
+  feature_key_val feature_key_val @relation(fields: [key], references: [key], onDelete: NoAction, onUpdate: NoAction)
+  org_info        org_info        @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info    patient_info?   @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info        txn_info?       @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([org_id, pid, vid, key], map: "feature_text_his_org_id_pid_txn_unique")
+  @@index([key], map: "feature_text_his_key")
+  @@index([org_id], map: "feature_text_his_org_id")
+  @@index([pid], map: "feature_text_his_pid")
+  @@index([vid], map: "feature_text_his_txn")
+}
+
+model item_id {
+  iid                    BigInt                   @id @default(autoincrement())
+  vid                    BigInt
+  pid                    BigInt
+  org_id                 BigInt
+  ser                    String                   @db.VarChar
+  create_time            DateTime                 @default(now()) @db.Timestamptz(6)
+  org_info               org_info                 @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info           patient_info             @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  txn_info               txn_info                 @relation(fields: [vid], references: [vid], onDelete: Cascade, onUpdate: NoAction)
+  feature_bool_ai        feature_bool_ai[]
+  feature_bool_coder     feature_bool_coder[]
+  feature_bool_his       feature_bool_his[]
+  feature_date_ai        feature_date_ai[]
+  feature_date_coder     feature_date_coder[]
+  feature_date_his       feature_date_his[]
+  feature_datetime_ai    feature_datetime_ai[]
+  feature_datetime_coder feature_datetime_coder[]
+  feature_datetime_his   feature_datetime_his[]
+  feature_decimal_ai     feature_decimal_ai[]
+  feature_decimal_coder  feature_decimal_coder[]
+  feature_decimal_his    feature_decimal_his[]
+  feature_has_ai         feature_has_ai[]
+  feature_has_coder      feature_has_coder[]
+  feature_has_his        feature_has_his[]
+  feature_json_ai        feature_json_ai[]
+  feature_json_coder     feature_json_coder[]
+  feature_json_his       feature_json_his[]
+  feature_smallint_ai    feature_smallint_ai[]
+  feature_smallint_coder feature_smallint_coder[]
+  feature_smallint_his   feature_smallint_his[]
+  feature_text_ai        feature_text_ai[]
+  feature_text_coder     feature_text_coder[]
+  feature_text_his       feature_text_his[]
+
+  @@unique([org_id, pid, vid, ser], map: "item_id_org_id_pid_vid_ser_unique")
+  @@index([iid], map: "iid")
+  @@index([org_id, pid, vid, ser], map: "item_id_org_id_pid_vid_iid")
+}
+
+model org_info {
+  org_id                 BigInt                   @id(map: "org_pkey") @default(autoincrement())
+  medical_facility_no    String?                  @db.VarChar(9)
+  name                   String                   @db.VarChar(255)
+  email                  String                   @db.VarChar(255)
+  tel                    String                   @db.VarChar(20)
+  contact_address        String
+  tax_name               String?                  @db.VarChar(255)
+  tax_branch             Int?                     @default(0)
+  tax_id                 String                   @db.VarChar
+  tax_address            String?
+  feature_bool_ai        feature_bool_ai[]
+  feature_bool_coder     feature_bool_coder[]
+  feature_bool_his       feature_bool_his[]
+  feature_date_ai        feature_date_ai[]
+  feature_date_coder     feature_date_coder[]
+  feature_date_his       feature_date_his[]
+  feature_datetime_ai    feature_datetime_ai[]
+  feature_datetime_coder feature_datetime_coder[]
+  feature_datetime_his   feature_datetime_his[]
+  feature_decimal_ai     feature_decimal_ai[]
+  feature_decimal_coder  feature_decimal_coder[]
+  feature_decimal_his    feature_decimal_his[]
+  feature_has_ai         feature_has_ai[]
+  feature_has_coder      feature_has_coder[]
+  feature_has_his        feature_has_his[]
+  feature_json_ai        feature_json_ai[]
+  feature_json_coder     feature_json_coder[]
+  feature_json_his       feature_json_his[]
+  feature_smallint_ai    feature_smallint_ai[]
+  feature_smallint_coder feature_smallint_coder[]
+  feature_smallint_his   feature_smallint_his[]
+  feature_text_ai        feature_text_ai[]
+  feature_text_coder     feature_text_coder[]
+  feature_text_his       feature_text_his[]
+  item_id                item_id[]
+  patient_info           patient_info[]
+  txn_info               txn_info[]
+
+  @@index([org_id], map: "org_info_org_id", type: Hash)
+}
+
+model patient_info {
+  pid                    BigInt                   @id @default(autoincrement())
+  org_id                 BigInt
+  hn                     String?                  @db.VarChar
+  birth_date             DateTime?                @db.Date
+  gender                 Boolean?
+  create_time            DateTime                 @default(now()) @db.Timestamptz(6)
+  update_time            DateTime                 @default(now()) @db.Timestamptz(6)
+  org_info               org_info                 @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  feature_bool_ai        feature_bool_ai[]
+  feature_bool_coder     feature_bool_coder[]
+  feature_bool_his       feature_bool_his[]
+  feature_date_ai        feature_date_ai[]
+  feature_date_coder     feature_date_coder[]
+  feature_date_his       feature_date_his[]
+  feature_datetime_ai    feature_datetime_ai[]
+  feature_datetime_coder feature_datetime_coder[]
+  feature_datetime_his   feature_datetime_his[]
+  feature_decimal_ai     feature_decimal_ai[]
+  feature_decimal_coder  feature_decimal_coder[]
+  feature_decimal_his    feature_decimal_his[]
+  feature_has_ai         feature_has_ai[]
+  feature_has_coder      feature_has_coder[]
+  feature_has_his        feature_has_his[]
+  feature_json_ai        feature_json_ai[]
+  feature_json_coder     feature_json_coder[]
+  feature_json_his       feature_json_his[]
+  feature_smallint_ai    feature_smallint_ai[]
+  feature_smallint_coder feature_smallint_coder[]
+  feature_smallint_his   feature_smallint_his[]
+  feature_text_ai        feature_text_ai[]
+  feature_text_coder     feature_text_coder[]
+  feature_text_his       feature_text_his[]
+  item_id                item_id[]
+  txn_info               txn_info[]
+
+  @@unique([org_id, hn], map: "patient_info_org_id_hn_unique")
+  @@index([org_id, hn], map: "patient_info_org_id_hn_id")
+  @@index([pid], map: "patient_info_pid_id", type: Hash)
+}
+
+model txn_info {
+  vid                    BigInt                   @id @default(autoincrement())
+  pid                    BigInt
+  org_id                 BigInt
+  txn                    String?                  @db.VarChar
+  type                   Boolean?
+  related_txn            String[]                 @db.VarChar
+  visit_time             DateTime?                @db.Timestamptz(6)
+  discharge_time         DateTime?                @db.Timestamptz(6)
+  los                    Int?                     @default(-1) @db.SmallInt
+  create_time            DateTime                 @default(now()) @db.Timestamptz(6)
+  update_time            DateTime                 @default(now()) @db.Timestamptz(6)
+  org_info               org_info                 @relation(fields: [org_id], references: [org_id], onDelete: Cascade, onUpdate: NoAction)
+  patient_info           patient_info             @relation(fields: [pid], references: [pid], onDelete: Cascade, onUpdate: NoAction)
+  coder_task             coder_task[]
+  feature_bool_ai        feature_bool_ai[]
+  feature_bool_coder     feature_bool_coder[]
+  feature_bool_his       feature_bool_his[]
+  feature_date_ai        feature_date_ai[]
+  feature_date_coder     feature_date_coder[]
+  feature_date_his       feature_date_his[]
+  feature_datetime_ai    feature_datetime_ai[]
+  feature_datetime_coder feature_datetime_coder[]
+  feature_datetime_his   feature_datetime_his[]
+  feature_decimal_ai     feature_decimal_ai[]
+  feature_decimal_coder  feature_decimal_coder[]
+  feature_decimal_his    feature_decimal_his[]
+  feature_has_ai         feature_has_ai[]
+  feature_has_coder      feature_has_coder[]
+  feature_has_his        feature_has_his[]
+  feature_json_ai        feature_json_ai[]
+  feature_json_coder     feature_json_coder[]
+  feature_json_his       feature_json_his[]
+  feature_smallint_ai    feature_smallint_ai[]
+  feature_smallint_coder feature_smallint_coder[]
+  feature_smallint_his   feature_smallint_his[]
+  feature_text_ai        feature_text_ai[]
+  feature_text_coder     feature_text_coder[]
+  feature_text_his       feature_text_his[]
+  item_id                item_id[]
+
+  @@unique([org_id, pid, txn], map: "txn_info_org_id_txn_unique")
+  @@index([org_id, pid, txn], map: "txn")
+  @@index([vid], map: "vid")
+}
