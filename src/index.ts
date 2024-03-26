@@ -13,7 +13,7 @@ app.get('/', (req: Request, res: Response) => {
     res.send('Express + TypeScript Server');
 });
 app.post('/patient', async (req: Request, res: Response) => {
-    console.log(req.body.HNtest);
+    console.log(String(req.body.HNtest).replace(/\n|\r/g, ''));
     let hnjson = req.body.HNtest;
     for (let i in hnjson) {
         hnjson[i].birth_date = new Date(hnjson[i].birth_date);
