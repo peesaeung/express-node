@@ -6,7 +6,7 @@
   "dependencies": {
     "@prisma/client": "6.15.0",
     "@types/express": "^5.0.3",
-    "@types/node": "^24.3.0",
+    "@types/node": "^24.3.1",
     "body-parser": "^2.2.0",
     "express": "^5.1.0",
     "nodemon": "^3.1.10",
