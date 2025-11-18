@@ -9,7 +9,7 @@
     "@types/node": "^24.10.0",
     "body-parser": "^2.2.0",
     "express": "^5.1.0",
-    "nodemon": "^3.1.10",
+    "nodemon": "^3.1.11",
     "prisma": "^6.19.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
